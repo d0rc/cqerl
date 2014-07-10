@@ -19,6 +19,7 @@
 
 -define(QUERIES_MAX, 128).
 -define(QUERIES_HW, 88).
+-define(FSM_TIMEOUT, 30000).
 
 -define(STATE_FROM_RETURN(Resp), case element(tuple_size(Resp), Resp) of
     N_ when is_integer(N_) -> element(tuple_size(Resp) - 1, Resp);
@@ -75,13 +76,13 @@ remove_user({ClientPid, ClientRef}) ->
     gen_fsm:send_event(ClientPid, {remove_user, ClientRef}).
 
 run_query({ClientPid, ClientRef}, Query) when is_binary(Query) ->
-    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, #cql_query{statement=Query}});
+    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, #cql_query{statement=Query}}, ?FSM_TIMEOUT);
 run_query({ClientPid, ClientRef}, Query) when is_list(Query) ->
-    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, #cql_query{statement=list_to_binary(Query)}});
+    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, #cql_query{statement=list_to_binary(Query)}}, ?FSM_TIMEOUT);
 run_query({ClientPid, ClientRef}, Query=#cql_query{statement=Statement}) when is_list(Statement) ->
-    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, Query#cql_query{statement=list_to_binary(Statement)}});
+    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, Query#cql_query{statement=list_to_binary(Statement)}}, ?FSM_TIMEOUT);
 run_query({ClientPid, ClientRef}, Query) ->
-    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, Query}).
+    gen_fsm:sync_send_event(ClientPid, {send_query, ClientRef, Query}, ?FSM_TIMEOUT).
 
 query_async(Client, Query) when is_binary(Query) ->
     query_async(Client, #cql_query{statement=Query});
@@ -91,7 +92,7 @@ query_async(Client, Query=#cql_query{statement=Statement}) when is_list(Statemen
     query_async(Client, Query#cql_query{statement=list_to_binary(Statement)});
 query_async({ClientPid, ClientRef}, Query) ->
     QueryRef = make_ref(),
-    gen_fsm:send_event(ClientPid, {send_query, {self(), QueryRef}, ClientRef, Query}),
+    gen_fsm:send_event(ClientPid, {send_query, {self(), QueryRef}, ClientRef, Query}, ?FSM_TIMEOUT),
     QueryRef.
 
 fetch_more(Continuation=#cql_result{client={ClientPid, ClientRef}}) ->
