@@ -624,7 +624,7 @@ process_outgoing_query(Call,
                 #cqerl_query{
                     kind    = normal,
                     statement = Query#cql_query.statement,
-                    values  = cqerl_protocol:encode_query_values(Values)
+                    values  = cqerl_protocol:encode_query_values(Values, Query)
                 }
             );
         
@@ -641,7 +641,7 @@ process_outgoing_query(Call,
                 #cqerl_query{
                     kind    = prepared,
                     statement = Ref,
-                    values  = cqerl_protocol:encode_query_values(Values, PMetadata#cqerl_result_metadata.columns)
+                    values  = cqerl_protocol:encode_query_values(Values, Query, PMetadata#cqerl_result_metadata.columns)
                 }
             )
     end,
